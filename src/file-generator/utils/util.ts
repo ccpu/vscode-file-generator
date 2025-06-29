@@ -18,5 +18,26 @@ export const isFile = (filePath: string): boolean => {
 };
 
 export const replaceSourceDir = (filePath: string, sourceDir: string): string => {
-    return filePath.replace(`${path.sep}${sourceDir}${path.sep}`, path.sep);
+    if (!sourceDir) {
+        return filePath;
+    }
+    
+    // Create regex pattern to match sourceDir in different positions:
+    // - At the beginning: sourceDir/
+    // - In the middle: /sourceDir/
+    // - At the end: /sourceDir
+    const sepEscaped = path.sep === '\\' ? '\\\\' : path.sep;
+    const pattern = new RegExp(
+        `(^${sourceDir}${sepEscaped}|${sepEscaped}${sourceDir}${sepEscaped}|${sepEscaped}${sourceDir}$)`,
+        'g'
+    );
+    
+    return filePath.replace(pattern, (match) => {
+        // If it's at the beginning, replace with empty string
+        if (match.startsWith(sourceDir)) {
+            return '';
+        }
+        // If it's in the middle or at the end, replace with single separator
+        return path.sep;
+    });
 };

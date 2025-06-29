@@ -57,7 +57,11 @@ export class TaskRunner {
         const helper = new CreationHelper(sourceFile, configs, newFileHelper);
         helper.createFile(configs.getTemplate());
       } catch (error) {
-        vscode.window.showErrorMessage(error.message);
+        if (error instanceof Error) {
+          vscode.window.showErrorMessage(error.message);
+        } else {
+          vscode.window.showErrorMessage(String(error));
+        }
       }
 
       newCreated = true;
