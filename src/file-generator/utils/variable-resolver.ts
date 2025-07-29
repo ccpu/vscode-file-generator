@@ -2,6 +2,7 @@ import { AbstractVariableResolverService } from "../../vs/variableResolver";
 import * as vscode from "vscode";
 import path from "path";
 import { Configuration } from "file-generator/config/Configuration";
+import { findClosestPackageRoot } from "./util";
 
 export class VariableResolverService extends AbstractVariableResolverService {
   constructor(
@@ -83,6 +84,26 @@ export const resolveVariables = (
       rootDir.replace(configs.getDirectorySuffix(), "")
     );
     command = command.split("${targetDirNameWithoutDirSuffix}").join(dirName);
+  }
+
+  /**
+   * Resolves variables in the command string, including:
+   * - ${relativeFileToPackageRoot}: file path relative to closest package root (directory with package.json)
+   * Falls back to absolute path if no package.json is found.
+   */
+
+  // Handle ${relativeFileToPackageRoot}
+  if (command.indexOf("${relativeFileToPackageRoot}") !== -1) {
+    const packageRoot = findClosestPackageRoot(filePath);
+    if (packageRoot) {
+      const relativePath = path.relative(packageRoot, filePath);
+      command = command
+        .split("${relativeFileToPackageRoot}")
+        .join(relativePath);
+    } else {
+      // If no package.json found, fallback to absolute path
+      command = command.split("${relativeFileToPackageRoot}").join(filePath);
+    }
   }
 
   return newFileVariableResolver.resolve(workSpaceFolder as any, command);
